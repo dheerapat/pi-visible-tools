@@ -5,25 +5,28 @@ const BUILTIN_TOOLS = new Set(["read", "bash", "edit", "write", "grep", "find", 
 export default function (pi: ExtensionAPI) {
 	let prevKey = "";
 
-	function updateStatus(ctx: ExtensionContext) {
+	function updateWidget(ctx: ExtensionContext) {
 		const active = pi.getActiveTools().filter((t) => BUILTIN_TOOLS.has(t));
 		const key = active.join(",");
 		if (key === prevKey) return;
 		prevKey = key;
 
 		if (active.length === 0) {
-			ctx.ui.setStatus("visible-tools", undefined);
+			ctx.ui.setWidget("visible-tools", undefined);
 			return;
 		}
 
-		ctx.ui.setStatus("visible-tools", ctx.ui.theme.fg("dim", `tools: ${active.join(", ")}`));
+		ctx.ui.setWidget("visible-tools", (_tui, theme) => ({
+			render: () => [theme.fg("dim", `tools: ${active.join(", ")}`)],
+			invalidate: () => {},
+		}), { placement: "belowEditor" });
 	}
 
 	pi.on("session_start", async (_event, ctx) => {
-		updateStatus(ctx);
+		updateWidget(ctx);
 	});
 
 	pi.on("turn_start", async (_event, ctx) => {
-		updateStatus(ctx);
+		updateWidget(ctx);
 	});
 }
